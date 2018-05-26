@@ -1,4 +1,5 @@
 import numpy as np
+from sklearn.datasets import make_circles, make_moons, make_blobs
 
 def gen_1d_gaussian_mixture(centers = [-3,-1,1,3],sigma=0.1,nbex=1000):
     data = np.array([])
@@ -91,3 +92,44 @@ def concentric_circles(k, nbex):
     data=data[idx]
     y=y[idx]
     return data, y.reshape(-1,1)
+
+def generate_cross(nbex,a,eps):
+    x1 = np.random.uniform(-5,5,(nbex,1))
+    noise = np.random.normal(0,eps,(nbex,1))
+    y1 = a*x1+noise
+    data = np.hstack((x1,y1))
+    x2 = np.random.uniform(-5,5,(nbex,1))
+    noise = np.random.normal(0,eps,(nbex,1))
+    y2 = -a*x2 + noise
+    data = np.vstack((data,np.hstack((x2,y2))))
+    labels = np.vstack((np.ones((nbex,1)),-np.ones((nbex,1))))
+    p = np.random.permutation(2*nbex)
+    data = data[p]
+    labels = labels[p]
+    return data,labels
+
+def read_data(namedata,namelabels):
+    with open(namedata) as f:
+        lines = list(map(str.rstrip, f.readlines()))
+        datas = list(map(lambda x:x.split(' '), lines))
+        datas_treated = []
+        for data in datas:
+            datas_treated.append([int(x) for x in data if x != ''])
+    with open(namelabels) as f:
+        lines = list(map(str.rstrip, f.readlines()))
+        datas = list(map(lambda x:x.split(' '), lines))
+        labels = []
+        for data in datas:
+            labels.append([int(data[0])])
+    return np.asarray(datas_treated),np.asarray(labels)
+
+def read_data_bis(filename,split_char=' '):
+    with open(filename) as f:
+        lines = list(map(str.rstrip, f.readlines()))
+        datas = list(map(lambda x:x.split(split_char), lines))
+        datas_treated = []
+        labels = []
+        for data in datas:
+            datas_treated.append([float(data[0]),float(data[1])])
+            labels.append(int(data[2]))
+    return np.asarray(datas_treated),np.asarray(labels)
