@@ -1,14 +1,13 @@
 import numpy as np
-from sklearn.cluster import KMeans
-from sklearn.cluster import AgglomerativeClustering
+from sklearn.cluster import KMeans, AffinityPropagation, AgglomerativeClustering, MeanShift, estimate_bandwidth, DBSCAN
 from sklearn.neighbors import kneighbors_graph
+import hdbscan
 import matplotlib.pyplot as plt
 from matplotlib import colors as mcolors
 import generation
 import graph
 from random import shuffle
 import sklearn
-from sklearn.cluster import MeanShift, estimate_bandwidth
 if sklearn.__version__=="0.17":
     from sklearn.mixture import GMM as GaussianMixture
 else:
@@ -102,13 +101,33 @@ class agglomerative_clustering:
         self.name = "Agglomerative Clustering"
     def __call__(self, data, n):
         knn_graph = kneighbors_graph(data, 30, include_self=False)
-        model = AgglomerativeClustering(linkage='ward',
+        model = AgglomerativeClustering(linkage='average',
                                         connectivity=knn_graph,
                                         n_clusters=n)
         model.fit(data)
         y_pred = model.labels_
         clusters = {i:np.where(y_pred==i) for i in np.unique(y_pred)}
         return clusters
+
+class dbscan:
+    def __init__(self):
+        self.name = "DBSCAN"
+    def __call__(self, data, n):
+        db = DBSCAN(eps=3.6, min_samples=8).fit(data)
+        y_pred =  db.labels_
+        print(len(np.unique(y_pred)))
+        clusters = {i:np.where(y_pred==i) for i in np.unique(y_pred)}
+        return clusters    
+
+class Hdbscan:
+    def __init__(self):
+        self.name = "HDBSCAN"
+    def __call__(self, data, n):
+        clusterer = hdbscan.HDBSCAN(min_cluster_size = 5)
+        y_pred = clusterer.fit_predict(data)
+        print(len(np.unique(y_pred)))
+        clusters = {i:np.where(y_pred==i) for i in np.unique(y_pred)}
+        return clusters    
 
 class k_means:
     def __init__(self):
@@ -117,6 +136,17 @@ class k_means:
         km = KMeans(n_clusters=n)
         y_pred = km.fit_predict(data)
         clusters = {i:np.where(y_pred==i) for i in np.unique(y_pred)}
+        return clusters
+
+class affinity_propagation:
+    def __init__(self):
+        self.name = "Affinity Propagation"
+    def __call__(self, data, n):
+        af = AffinityPropagation().fit(data)
+        cluster_centers_indices = af.cluster_centers_indices_
+        y_pred = af.labels_
+        clusters = {i:np.where(y_pred==i) for i in np.unique(y_pred)}
+        print(len(np.unique(y_pred)))
         return clusters
         
 def cluster_visualisation(data, clusters, title):
@@ -159,20 +189,23 @@ def test_clustering(data, y, full = False, comparison = False):
     n_clusters = len(np.unique(y))
     epsilon = graph.suggest_epsilon(data)
     if full:
-        graph_methods = [graph.eps_neighborhood_graph(eps = epsilon),
-                         graph.k_nearest_neighbors_graph(k = 10, mutual = False),
+        graph_methods = [graph.eps_neighborhood_graph(eps = epsilon, allow_override = True),
+                         graph.k_nearest_neighbors_graph(k = 15, mutual = True, allow_override = True),
                          graph.fully_connected_graph()]
         clustering_methods = [unnormalized_spectral_clustering(),
                               normalized_spectral_clustering(),
                               normalized_spectral_clustering_bis()]
     else:
-        graph_methods = [graph.k_nearest_neighbors_graph(k = 10, mutual = False)]
+        graph_methods = [graph.k_nearest_neighbors_graph(k = 15, mutual = True, allow_override = True)]
         clustering_methods = [normalized_spectral_clustering()]
     if comparison:
         alternative_methods = [gaussian_mixture(),
                                k_means(),
                                mean_shift(),
-                               agglomerative_clustering()]
+                               agglomerative_clustering(),
+                               dbscan(),
+                               Hdbscan()]
+                               #affinity_propagation()]
     else:
         alternative_methods = []
     
@@ -207,14 +240,16 @@ def test_USPS_data():
     plt.show()
 
 if __name__ == "__main__":
-    data, y = generation.gen_arti(nbex = 500, data_type = 1, epsilon = 0.3)
+#    data, y = generation.gen_arti(nbex = 500, data_type = 1, epsilon = 0.3)
 #    data, y = generation.random_walks(nbex = 500, parallel=True)
 #    data, y = generation.random_walks(nbex = 500)
 #    data, y = generation.concentric_circles(nbex = 500)
 #    data, y = generation.generate_cross(nbex = 500)
-#    data, y = read_data_bis(etc.) mais je ne trouve pas les bons arguments
-    test_clustering(data, y, full = True, comparison = True)
+#    data, y = generation.read_data_bis("Datasets/spiral.txt", split_char="\t")
+    data, y = generation.read_data_bis("Datasets/cluto-t4-8k.txt", split_char=",")
+    test_clustering(data, y, full = False, comparison = True)
 #    test_USPS_data()
-#s    GraphVisualisation(data, y, graph.eps_neighborhood_graph(eps = graph.suggest_epsilon(data)))
-
+#    GraphVisualisation(data, y, graph.eps_neighborhood_graph(eps = graph.suggest_epsilon(data), allow_override=True))
+#    GraphVisualisation(data, y)
+#    GraphVisualisation(data, y, graph.k_nearest_neighbors_graph(k = 10, mutual = False))
     

@@ -1,6 +1,6 @@
 import numpy as np
 
-def gaussian_similarity_matrix(x, sigma=5):
+def gaussian_similarity_matrix(x, sigma=1):
     n = x.shape[0]
     S = np.zeros((n,n))
     for i in range(n):
@@ -18,9 +18,10 @@ def suggest_epsilon(x, sigma=5):
     return 1.7*min_link
 
 class eps_neighborhood_graph:
-    def __init__(self, eps = 1):
+    def __init__(self, eps = None, allow_override = False):
         self.eps = eps
         self.name = "epsilon-neighborhood graph"
+        self.allow_override = allow_override
     def __call__(self, S):
         n = S.shape[0]
         mat_adj = np.zeros((n,n))
@@ -28,6 +29,11 @@ class eps_neighborhood_graph:
             for j in range(i):
                 mat_adj[i][j] = 1 if S[i][j] > self.eps else 0
                 mat_adj[j][i] = mat_adj[i][j]
+        if self.allow_override:
+            if 0 in [np.sum(mat_adj[:,i]) for i in range(n)]:
+                self.eps *= 0.8
+                print("warning : overriding value of epsilon to avoid divisions by zero when computing graph laplacian")
+                return self.__call__(S)
         return mat_adj
     
 def k_nearest_neighbors(k,similarity):
@@ -37,10 +43,11 @@ def k_nearest_neighbors(k,similarity):
     return sorted_similarity[n-k+1:,0]
 
 class k_nearest_neighbors_graph:
-    def __init__(self, k = 10, mutual = True):
+    def __init__(self, k = 10, mutual = True, allow_override = False):
         self.k = k
         self.mutual = mutual
         self.name = "k-nearest neighbors graph"
+        self.allow_override = allow_override
     def __call__(self, S):
         n = S.shape[0]
         mat_adj = np.zeros((n,n))
@@ -56,6 +63,11 @@ class k_nearest_neighbors_graph:
                 else:
                     mat_adj[i][j] = S[i][j] if (j in knn_matrix[i] or i in knn_matrix[j]) else 0
                     mat_adj[j][i] = mat_adj[i][j]
+        if self.allow_override:
+            if 0 in [np.sum(mat_adj[:,i]) for i in range(n)]:
+                self.k += 5
+                print("warning : overriding value of k to avoid divisions by zero when computing graph laplacian")
+                return self.__call__(S)
         return mat_adj
 
 class fully_connected_graph:
@@ -65,7 +77,7 @@ class fully_connected_graph:
         n = S.shape[0]
         mat_adj = np.zeros((n,n))
         for i in range(n):
-            for j in range(i):
+            for j in range(i+1):
                 mat_adj[i,j] = S[i,j]
                 mat_adj[j,i] = S[i,j]
         return mat_adj
