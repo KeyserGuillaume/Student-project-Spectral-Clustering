@@ -32,10 +32,12 @@ def gen_arti(centerx=1,centery=1,sigma=0.1,nbex=1000,data_type=0,epsilon=0.02):
          y=np.hstack((np.ones(nbex//2),-np.ones(nbex//2)))
     if data_type==1:
         #melange de 4 gaussiennes
-        xpos=np.vstack((np.random.multivariate_normal([centerx,centerx],np.diag([sigma,sigma]),int(nbex//4)),np.random.multivariate_normal([-centerx,-centerx],np.diag([sigma,sigma]),int(nbex/4))))
-        xneg=np.vstack((np.random.multivariate_normal([-centerx,centerx],np.diag([sigma,sigma]),int(nbex//4)),np.random.multivariate_normal([centerx,-centerx],np.diag([sigma,sigma]),int(nbex//4))))
+        xpos=np.vstack((np.random.multivariate_normal([centerx,centerx],np.diag([sigma,sigma]),int(nbex//4)),
+                        np.random.multivariate_normal([-centerx,-centerx],np.diag([sigma,sigma]),int(nbex/4))))
+        xneg=np.vstack((np.random.multivariate_normal([-centerx,centerx],np.diag([sigma,sigma]),int(nbex//4)),
+                        np.random.multivariate_normal([centerx,-centerx],np.diag([sigma,sigma]),int(nbex//4))))
         data=np.vstack((xpos,xneg))
-        y=np.hstack((np.ones(nbex//2),-np.ones(int(nbex//2))))
+        y=np.hstack((0*np.ones(nbex//4), 1*np.ones(int(nbex//4)), 2*np.ones(int(nbex//4)),  3*np.ones(int(nbex//4))))
 
     if data_type==2:
         #echiquier
@@ -51,35 +53,40 @@ def gen_arti(centerx=1,centery=1,sigma=0.1,nbex=1000,data_type=0,epsilon=0.02):
     y=y[idx]
     return data,y
     
-def random_walks(k, nbex, step=0.005, noise=0.005, d=None):
+def random_walks(k = 3, nbex = 1000, step = 0.005, noise = 0.005, d = None, parallel = False):
     """
     L'idee est d'avoir k marches aleatoires
     """
+    if d is None:
+        d = (np.random.rand(2,k)-0.5).reshape(-1,2)
+    else:
+        d = d.reshape(-1,2)
+    if d.shape[0] == 1:
+        d = np.vstack([d for i in range(k)])
+    if parallel:
+        d = np.vstack([d[0] for i in range(k)])
     data = np.array([]).reshape(-1,2)
     y = np.array([])
-    timesToWalk = nbex/k*np.ones(nbex)
+    timesToWalk = (nbex/k*np.ones(k)).astype(int)
     for i in range(k):
         x = np.random.rand(2,1).reshape(-1,2)
-        if d.any():
-            d = d.reshape(-1,2)
-        else:
-            d = (np.random.rand(2,1)-0.5).reshape(-1,2)
         data = np.vstack((data,x))
-        for t in range(int(timesToWalk[i]-1)):
-            x+=step*d+noise*(np.random.rand(2,1)-0.5).reshape(-1,2)
+        for t in range(timesToWalk[i]-1):
+            x+=step*d[i]+noise*(np.random.rand(2,1)-0.5).reshape(-1,2)
             data = np.vstack((data,x))
         y = np.concatenate((y,i*np.ones(timesToWalk[i])))
-    idx = np.random.permutation(nbex)
+    idx = np.random.permutation(np.sum(timesToWalk))
     data=data[idx]
     y=y[idx]
     return data, y.reshape(-1,1)
     
-def concentric_circles(k, nbex):
+def concentric_circles(k = 3, nbex = 1000):
     data = np.array([]).reshape(-1,2)
     y = np.array([])
-    radius_list = 1/3+np.arange(0,4*k)/(12*k)
+    radius_list = 1/5+np.arange(0,3*k)/(3*k)
+    nb_per_circle = (nbex/k*np.ones(k)).astype(int)
     for i in range(k):
-        for j in range(int(nbex/k)):
+        for j in range(nb_per_circle[i]):
             r1 = radius_list[3*i]
             r2 = radius_list[3*i+1]
             theta = 6.28*float(np.random.rand(1,1))
@@ -87,13 +94,13 @@ def concentric_circles(k, nbex):
             a = r*np.cos(theta)
             b = r*np.sin(theta)
             data = np.vstack((data, np.array([[a,b]])))
-        y = np.concatenate((y,i*np.ones(int(nbex/k))))
-    idx = np.random.permutation(nbex)
+        y = np.concatenate((y,i*np.ones(nb_per_circle[i])))
+    idx = np.random.permutation(np.sum(nb_per_circle))
     data=data[idx]
     y=y[idx]
     return data, y.reshape(-1,1)
 
-def generate_cross(nbex,a,eps):
+def generate_cross(nbex = 1000, a = 1, eps = 0.1):
     x1 = np.random.uniform(-5,5,(nbex,1))
     noise = np.random.normal(0,eps,(nbex,1))
     y1 = a*x1+noise
@@ -133,3 +140,61 @@ def read_data_bis(filename,split_char=' '):
             datas_treated.append([float(data[0]),float(data[1])])
             labels.append(int(data[2]))
     return np.asarray(datas_treated),np.asarray(labels)
+    
+#Chargement des donnees USPS
+def load_usps(filename):
+    with open (filename, "r") as f:
+        f.readline ()
+        data =[[float(x) for x in l.split()] for l in f if len(l.split()) > 2]
+    tmp = np.array(data)
+    return tmp[:, 1:], tmp [:, 0].astype(int)
+
+
+if __name__== "__main__":
+    import matplotlib.pyplot as plt
+       
+    plt.figure()
+    plt.hlines(0,-4,4)    
+    data, _ = gen_1d_gaussian_mixture(centers = [-3,-1,1,3])
+    plt.eventplot(data, orientation='horizontal', colors='b')
+    plt.axis('off')
+    plt.show()
+    
+    plt.figure()
+    data, _ = gen_arti()
+    plt.scatter(data[:,0], data[:,1], edgecolors='face')
+    plt.show()
+    
+    plt.figure()    
+    data, _ = gen_arti(data_type = 1)
+    plt.scatter(data[:,0], data[:,1], edgecolors='face')
+    plt.show()
+    
+    plt.figure()    
+    data, _ = gen_arti(data_type = 2)
+    plt.scatter(data[:,0], data[:,1], edgecolors='face')
+    plt.show()
+    
+    plt.figure()
+    data, _ = random_walks(parallel=True)
+    plt.scatter(data[:,0], data[:,1], edgecolors='face')
+    plt.show()
+    
+    plt.figure()
+    data, _ = random_walks()
+    plt.scatter(data[:,0], data[:,1], edgecolors='face')
+    plt.show()
+    
+    plt.figure()
+    data, _ = concentric_circles()
+    plt.scatter(data[:,0], data[:,1], edgecolors='face')
+    plt.show()
+    
+    plt.figure()
+    data, _ = generate_cross()
+    plt.scatter(data[:,0], data[:,1], edgecolors='face')
+    plt.show()
+    
+    
+    train_data_pixels, train_data_labels = load_usps("USPS_train.txt")
+    test_data_pixels, test_data_labels = load_usps("USPS_test.txt")
