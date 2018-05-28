@@ -77,7 +77,7 @@ class fully_connected_graph:
         n = S.shape[0]
         mat_adj = np.zeros((n,n))
         for i in range(n):
-            for j in range(i+1):
+            for j in range(i):
                 mat_adj[i,j] = S[i,j]
                 mat_adj[j,i] = S[i,j]
         return mat_adj

@@ -98,7 +98,7 @@ def concentric_circles(k = 3, nbex = 1000):
     idx = np.random.permutation(np.sum(nb_per_circle))
     data=data[idx]
     y=y[idx]
-    return data, y.reshape(-1,1)
+    return data, y.ravel()
 
 def generate_cross(nbex = 1000, a = 1, eps = 0.1):
     x1 = np.random.uniform(-5,5,(nbex,1))

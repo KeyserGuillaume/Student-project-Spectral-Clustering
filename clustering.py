@@ -115,7 +115,6 @@ class dbscan:
     def __call__(self, data, n):
         db = DBSCAN(eps=3.6, min_samples=8).fit(data)
         y_pred =  db.labels_
-        print(len(np.unique(y_pred)))
         clusters = {i:np.where(y_pred==i) for i in np.unique(y_pred)}
         return clusters    
 
@@ -123,7 +122,7 @@ class Hdbscan:
     def __init__(self):
         self.name = "HDBSCAN"
     def __call__(self, data, n):
-        clusterer = hdbscan.HDBSCAN(min_cluster_size = 5)
+        clusterer = hdbscan.HDBSCAN(min_cluster_size =  20) # 5 for spiral is good
         y_pred = clusterer.fit_predict(data)
         print(len(np.unique(y_pred)))
         clusters = {i:np.where(y_pred==i) for i in np.unique(y_pred)}
@@ -161,7 +160,7 @@ def cluster_visualisation(data, clusters, title):
     plt.title(title)
     for i in clusters:
         cluster = clusters[i][0]
-        plt.scatter(data[cluster,0], data[cluster,1], c=colors[i], edgecolors='face')
+        plt.scatter(data[cluster,0], data[cluster,1], c=colors[i], edgecolors='face', s=60)
     plt.show()
 
 def GraphVisualisation(data, y, graph_meth = None):
@@ -170,7 +169,7 @@ def GraphVisualisation(data, y, graph_meth = None):
     """
     if graph_meth==None:
         graph_meth = graph.fully_connected_graph()
-    data = np.vstack([data[np.where(y==i)] for i in np.unique(y)])
+    data = np.vstack([(data[np.where(y==i)]).reshape((-1, data.shape[1])) for i in np.unique(y)])
     S = graph.gaussian_similarity_matrix(data)
     W = graph_meth(S)
     plt.title(graph_meth.name)
@@ -196,7 +195,7 @@ def test_clustering(data, y, full = False, comparison = False):
                               normalized_spectral_clustering(),
                               normalized_spectral_clustering_bis()]
     else:
-        graph_methods = [graph.k_nearest_neighbors_graph(k = 15, mutual = True, allow_override = True)]
+        graph_methods = [graph.k_nearest_neighbors_graph(k = 15, mutual = False, allow_override = True)]
         clustering_methods = [normalized_spectral_clustering()]
     if comparison:
         alternative_methods = [gaussian_mixture(),
@@ -205,7 +204,7 @@ def test_clustering(data, y, full = False, comparison = False):
                                agglomerative_clustering(),
                                dbscan(),
                                Hdbscan()]
-                               #affinity_propagation()]
+                              # affinity_propagation()]
     else:
         alternative_methods = []
     
@@ -228,7 +227,7 @@ def test_USPS_data():
     data = data[0:1000]
     y = y[0:1000]
     S = graph.gaussian_similarity_matrix(data)
-    W = graph.k_nearest_neighbors_graph(k = 10, mutual = False)(S)
+    W = graph.k_nearest_neighbors_graph(k = 20, mutual = False, allow_override = True)(S)
     _, _ , clusters = normalized_spectral_clustering()(W, len(np.unique(y)))
     fig = plt.figure()
     fig.suptitle("Number repartition in clusters", fontsize=16)
@@ -243,13 +242,13 @@ if __name__ == "__main__":
 #    data, y = generation.gen_arti(nbex = 500, data_type = 1, epsilon = 0.3)
 #    data, y = generation.random_walks(nbex = 500, parallel=True)
 #    data, y = generation.random_walks(nbex = 500)
-#    data, y = generation.concentric_circles(nbex = 500)
+    data, y = generation.concentric_circles(k = 4, nbex = 1000)
 #    data, y = generation.generate_cross(nbex = 500)
 #    data, y = generation.read_data_bis("Datasets/spiral.txt", split_char="\t")
-    data, y = generation.read_data_bis("Datasets/cluto-t4-8k.txt", split_char=",")
-    test_clustering(data, y, full = False, comparison = True)
+#    data, y = generation.read_data_bis("Datasets/cluto-t4-8k.txt", split_char=",")
+    test_clustering(data, y, full = True, comparison = True)
 #    test_USPS_data()
 #    GraphVisualisation(data, y, graph.eps_neighborhood_graph(eps = graph.suggest_epsilon(data), allow_override=True))
 #    GraphVisualisation(data, y)
-#    GraphVisualisation(data, y, graph.k_nearest_neighbors_graph(k = 10, mutual = False))
+#    GraphVisualisation(data, y, graph.k_nearest_neighbors_graph(k = 15, mutual = True, allow_override = True))
     
