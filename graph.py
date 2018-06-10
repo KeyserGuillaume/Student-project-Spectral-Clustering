@@ -9,13 +9,19 @@ def gaussian_similarity_matrix(x, sigma=1):
             S[j][i] = S[i][j]
     return S
 
+#def suggest_epsilon(x, sigma=5):
+#    n = x.shape[0]
+#    min_link = 1000000
+#    for i in range(n):
+#        for j in range(i+1):
+#            min_link = min(min_link, np.exp(-(np.linalg.norm(x[i]-x[j])**2)/(2*sigma**2)))
+#    return 1.7*min_link
+
 def suggest_epsilon(x, sigma=5):
     n = x.shape[0]
-    min_link = 1000000
-    for i in range(n):
-        for j in range(i+1):
-            min_link = min(min_link, np.exp(-(np.linalg.norm(x[i]-x[j])**2)/(2*sigma**2)))
-    return 1.7*min_link
+    links = list()
+    [[links.append(np.exp(-(np.linalg.norm(x[i]-x[j])**2)/(2*sigma**2))) for j in range(i+1)] for i in range(n)]
+    return sorted(links)[len(links)//2]
 
 class eps_neighborhood_graph:
     def __init__(self, eps = None, allow_override = False):

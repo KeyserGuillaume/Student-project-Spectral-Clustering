@@ -76,11 +76,11 @@ def random_walks(k = 3, nbex = 1000, step = 0.005, noise = 0.005, d = None, para
             data = np.vstack((data,x))
         y = np.concatenate((y,i*np.ones(timesToWalk[i])))
     idx = np.random.permutation(np.sum(timesToWalk))
-    data=data[idx]
-    y=y[idx]
+    data = data[idx]
+    y = y[idx]
     return data, y.reshape(-1,1)
     
-def concentric_circles(k = 3, nbex = 1000):
+def concentric_circles(k = 3, nbex = 1000, eps = 0.01):
     data = np.array([]).reshape(-1,2)
     y = np.array([])
     radius_list = 1/5+np.arange(0,3*k)/(3*k)
@@ -95,6 +95,8 @@ def concentric_circles(k = 3, nbex = 1000):
             b = r*np.sin(theta)
             data = np.vstack((data, np.array([[a,b]])))
         y = np.concatenate((y,i*np.ones(nb_per_circle[i])))
+    data[:,0] += np.random.normal(0,eps,nbex)
+    data[:,1] += np.random.normal(0,eps,nbex)
     idx = np.random.permutation(np.sum(nb_per_circle))
     data=data[idx]
     y=y[idx]

@@ -30,8 +30,8 @@ class unnormalized_spectral_clustering:
         prediction = kmeans.labels_
         clusters = {}
         for i in range(k):
-            clusters[i] = np.where(prediction == i)
-        return eigenvalues[index_sorted[:k]], k_first_eigenvectors,clusters
+            clusters[i] = np.where(prediction == i)[0]
+        return eigenvalues[index_sorted[:k]], k_first_eigenvectors, clusters
 
 def normalized_laplacian_rw(W):
     d = np.sum(W,axis=1)
@@ -56,7 +56,7 @@ class normalized_spectral_clustering:
         prediction = kmeans.labels_
         clusters = {}
         for i in range(k):
-            clusters[i] = np.where(prediction == i)
+            clusters[i] = np.where(prediction == i)[0]
         return eigenvalues[index_sorted[:k]], k_first_eigenvectors, clusters
 
 class normalized_spectral_clustering_bis:
@@ -72,7 +72,7 @@ class normalized_spectral_clustering_bis:
         prediction = kmeans.labels_
         clusters = {}
         for i in range(k):
-            clusters[i] = np.where(prediction == i)
+            clusters[i] = np.where(prediction == i)[0]
         return eigenvalues[index_sorted[:k]], k_first_eigenvectors,clusters
 
 class gaussian_mixture:
@@ -82,7 +82,7 @@ class gaussian_mixture:
         gm = GaussianMixture(n_components = n)
         gm.fit(data)
         y_pred = gm.predict(data)
-        clusters = {i:np.where(y_pred==i) for i in np.unique(y_pred)}
+        clusters = {i:np.where(y_pred==i)[0] for i in np.unique(y_pred)}
         return clusters
 
 class mean_shift:
@@ -93,7 +93,7 @@ class mean_shift:
         ms = MeanShift(bandwidth=bandwidth, bin_seeding=True)
         ms.fit(data)
         y_pred = ms.predict(data)
-        clusters = {i:np.where(y_pred==i) for i in np.unique(y_pred)}
+        clusters = {i:np.where(y_pred==i)[0] for i in np.unique(y_pred)}
         return clusters
 
 class agglomerative_clustering:
@@ -106,7 +106,7 @@ class agglomerative_clustering:
                                         n_clusters=n)
         model.fit(data)
         y_pred = model.labels_
-        clusters = {i:np.where(y_pred==i) for i in np.unique(y_pred)}
+        clusters = {i:np.where(y_pred==i)[0] for i in np.unique(y_pred)}
         return clusters
 
 class dbscan:
@@ -115,8 +115,8 @@ class dbscan:
     def __call__(self, data, n):
         db = DBSCAN(eps=3.6, min_samples=8).fit(data)
         y_pred =  db.labels_
-        clusters = {i:np.where(y_pred==i) for i in np.unique(y_pred)}
-        return clusters    
+        clusters = {i:np.where(y_pred==i)[0] for i in np.unique(y_pred)}
+        return clusters
 
 class Hdbscan:
     def __init__(self):
@@ -125,8 +125,8 @@ class Hdbscan:
         clusterer = hdbscan.HDBSCAN(min_cluster_size =  20) # 5 for spiral is good
         y_pred = clusterer.fit_predict(data)
         print(len(np.unique(y_pred)))
-        clusters = {i:np.where(y_pred==i) for i in np.unique(y_pred)}
-        return clusters    
+        clusters = {i:np.where(y_pred==i)[0] for i in np.unique(y_pred)}
+        return clusters
 
 class k_means:
     def __init__(self):
@@ -134,7 +134,7 @@ class k_means:
     def __call__(self, data, n):
         km = KMeans(n_clusters=n)
         y_pred = km.fit_predict(data)
-        clusters = {i:np.where(y_pred==i) for i in np.unique(y_pred)}
+        clusters = {i:np.where(y_pred==i)[0] for i in np.unique(y_pred)}
         return clusters
 
 class affinity_propagation:
@@ -144,7 +144,7 @@ class affinity_propagation:
         af = AffinityPropagation().fit(data)
         cluster_centers_indices = af.cluster_centers_indices_
         y_pred = af.labels_
-        clusters = {i:np.where(y_pred==i) for i in np.unique(y_pred)}
+        clusters = {i:np.where(y_pred==i)[0] for i in np.unique(y_pred)}
         print(len(np.unique(y_pred)))
         return clusters
         
@@ -153,13 +153,15 @@ def cluster_visualisation(data, clusters, title):
     visualisation dans R^2     
     """
     if len(clusters) > 7:
+        print(len(clusters))
+        print(clusters)
         colors = list(mcolors.CSS4_COLORS.keys())
     else:
         colors = "byrmcgk"    
     plt.figure()
     plt.title(title)
     for i in clusters:
-        cluster = clusters[i][0]
+        cluster = clusters[i]
         plt.scatter(data[cluster,0], data[cluster,1], c=colors[i], edgecolors='face', s=60)
     plt.show()
 
