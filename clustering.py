@@ -148,7 +148,7 @@ class affinity_propagation:
         print(len(np.unique(y_pred)))
         return clusters
         
-def cluster_visualisation(data, clusters, title):
+def cluster_visualisation(data, clusters, title, block=True):
     """
     visualisation dans R^2     
     """
@@ -158,12 +158,13 @@ def cluster_visualisation(data, clusters, title):
         colors = list(mcolors.CSS4_COLORS.keys())
     else:
         colors = "byrmcgk"    
-    plt.figure()
+    fig = plt.figure()
     plt.title(title)
     for i in clusters:
         cluster = clusters[i]
         plt.scatter(data[cluster,0], data[cluster,1], c=colors[i], edgecolors='face', s=60)
-    plt.show()
+    plt.show(block=block)
+    return fig
 
 def GraphVisualisation(data, y, graph_meth = None):
     """
@@ -177,10 +178,11 @@ def GraphVisualisation(data, y, graph_meth = None):
     plt.title(graph_meth.name)
     plt.imshow(W, interpolation="nearest", cmap="gray")
     L = normalized_laplacian_rw(W)
-    plt.figure()
+    fig = plt.figure()
     plt.title("Normalized laplacian")
     plt.imshow(L, interpolation="nearest", cmap="gray")
     plt.show()
+    return fig
 
 def test_clustering(data, y, full = False, comparison = False):
     """

@@ -95,8 +95,8 @@ def concentric_circles(k = 3, nbex = 1000, eps = 0.01):
             b = r*np.sin(theta)
             data = np.vstack((data, np.array([[a,b]])))
         y = np.concatenate((y,i*np.ones(nb_per_circle[i])))
-    data[:,0] += np.random.normal(0,eps,nbex)
-    data[:,1] += np.random.normal(0,eps,nbex)
+    data[:,0] += np.random.normal(0,eps,np.sum(nb_per_circle))
+    data[:,1] += np.random.normal(0,eps,np.sum(nb_per_circle))
     idx = np.random.permutation(np.sum(nb_per_circle))
     data=data[idx]
     y=y[idx]
